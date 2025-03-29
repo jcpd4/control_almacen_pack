@@ -3,6 +3,23 @@ let cajaActual = 0;
 let pedidosGuardados = [];
 let editandoIndex = null;
 
+// cargamos la variable del json puro
+//⚠️ Importante
+// Este método solo funciona si estás sirviendo la web desde un servidor local (como con Live Server de VS Code o Netlify). 
+// Si estás abriendo el HTML desde file:///, fetch dará error por CORS o bloqueo de seguridad.
+
+let asinData = {};
+
+fetch('../data/asins.json')
+.then(response => response.json())
+.then(data => {
+  asinData = data;
+})
+.catch(error => {
+  console.error("Error cargando el JSON de ASINs:", error);
+});
+
+
 document.addEventListener("DOMContentLoaded", () => {
   cargarPedidosGuardados();
 });
@@ -43,26 +60,50 @@ function nuevaCaja() {
   `;
   document.getElementById("cajas").appendChild(cajaDiv);
 }
-
+// agregarProducto
 function agregarProducto(cajaId) {
   const cantidad = parseInt(document.getElementById(`cantidad-${cajaId}`).value);
-  const asin = document.getElementById(`asin-${cajaId}`).value.trim().toUpperCase();
+  const asinInput = document.getElementById(`asin-${cajaId}`).value.trim().toUpperCase();
 
-  if (!cantidad || !asin || asin.length !== 4) {
+  if (!cantidad || !asinInput || asinInput.length !== 4) {
     alert("Por favor, introduce una cantidad válida y un ASIN de 4 caracteres.");
     return;
   }
 
-  pedido[cajaId].push({ asin, cantidad });
+  // Buscar el ASIN completo en asinData
+  let asinCompleto = asinInput;
+  let sku = "";
+  let codigoInterno = "";
 
+  for (const [asin, data] of Object.entries(asinData)) {
+    if (data.ultimos4 === asinInput) {
+      asinCompleto = asin;
+      sku = data.sku;
+      codigoInterno = data.codigoInterno;
+      break;
+    }
+  }
+
+  // Si no lo encuentra, avisar (opcional)
+  if (asinCompleto === asinInput) {
+    alert("❗ No se ha encontrado un ASIN completo para esos 4 caracteres. Se usará tal cual.");
+  }
+
+  // Guardar en el pedido
+  pedido[cajaId].push({ asin: asinCompleto, cantidad });
+
+  // Mostrar en pantalla
   const contenidoDiv = document.getElementById(`contenido-${cajaId}`);
   const p = document.createElement("p");
-  p.textContent = `${cantidad} x ${asin}`;
+  p.innerHTML = `${cantidad} x <strong>${asinCompleto}</strong>` + 
+    (sku && codigoInterno ? ` <br><small>SKU: ${sku} | Interno: ${codigoInterno}</small>` : '');
   contenidoDiv.appendChild(p);
 
+  // Limpiar inputs
   document.getElementById(`cantidad-${cajaId}`).value = "";
   document.getElementById(`asin-${cajaId}`).value = "";
 }
+
 
 function acabarPedido(modoEdicion = false) {
   const resumen = {};
