@@ -45,19 +45,20 @@ function nuevaCaja() {
   const cajaDiv = document.createElement("div");
   cajaDiv.className = "caja";
   cajaDiv.innerHTML = `
-    <h3>
-			Caja ${cajaActual}
-			<button onclick="editarCaja('${cajaId}')">✏️</button>
-		</h3>
-    <div id="contenido-${cajaId}"></div>
-    <div class="input-line">
-      <input type="number" min="1" placeholder="Cantidad" id="cantidad-${cajaId}" />
-      <span>x</span>
-      <input type="text" maxlength="4" placeholder="ASIN (últimos 4)" id="asin-${cajaId}" />
-      <button onclick="agregarProducto('${cajaId}')">Agregar</button>
-    </div>
-    <hr/>
-  `;
+  <div class="Titulo_caja">
+    <h3>Caja ${cajaActual}</h3>
+    <button onclick="editarCaja('${cajaId}')" class="icon-btn">✏️</button>
+  </div>
+  <div id="contenido-${cajaId}"></div>
+  <div class="input-line">
+    <input type="number" min="1" placeholder="Cantidad" id="cantidad-${cajaId}" />
+    <span>x</span>
+    <input type="text" maxlength="4" placeholder="ASIN (últimos 4)" id="asin-${cajaId}" />
+    <button onclick="agregarProducto('${cajaId}')">Agregar</button>
+  </div>
+  <hr/>
+`;
+
   document.getElementById("cajas").appendChild(cajaDiv);
 }
 // agregarProducto
@@ -397,7 +398,7 @@ function editarCaja(cajaId) {
 
   contenidoDiv.appendChild(guardarBtn);
 }
-
+// guardarCambiosCaja
 function guardarCambiosCaja(cajaId, total) {
   const nuevosProductos = [];
 
@@ -405,18 +406,24 @@ function guardarCambiosCaja(cajaId, total) {
     const cantidad = parseInt(document.getElementById(`edit-cantidad-${cajaId}-${i}`).value);
     const asin = document.getElementById(`edit-asin-${cajaId}-${i}`).value.trim().toUpperCase();
 
-    if (!cantidad || !asin || asin.length !== 4) {
-      alert("Todos los productos deben tener una cantidad válida y un ASIN de 4 letras.");
+    // Si la cantidad es 0, ignoramos este producto (lo eliminamos)
+    if (!cantidad || cantidad === 0) {
+      continue;
+    }
+
+    // Validar que el ASIN tenga al menos 4 caracteres
+    if (asin.length < 4) {
+      alert("El ASIN debe tener al menos 4 caracteres.");
       return;
     }
 
     nuevosProductos.push({ asin, cantidad });
   }
 
-  // Actualiza la caja
+  // Actualiza la caja con productos válidos
   pedido[cajaId] = nuevosProductos;
 
-  // Vuelve a mostrar los productos de forma normal
+  // Mostrar la caja de nuevo
   const contenidoDiv = document.getElementById(`contenido-${cajaId}`);
   contenidoDiv.innerHTML = "";
 
@@ -426,5 +433,7 @@ function guardarCambiosCaja(cajaId, total) {
     contenidoDiv.appendChild(p);
   });
 
+  alert("✅ Cambios guardados correctamente.");
 }
+
 
