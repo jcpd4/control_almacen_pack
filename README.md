@@ -139,7 +139,7 @@ screenshots/
 
 ## 🧑‍💻 Desarrollado por
 
-Juan – [GitHub](https://github.com/tuusuario)  
+Juan Carlos Ponce de León Ruiz – [GitHub](https://github.com/tuusuario)  
 Packlist © 2025
 
 ---
