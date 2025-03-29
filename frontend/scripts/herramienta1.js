@@ -27,7 +27,10 @@ function nuevaCaja() {
   const cajaDiv = document.createElement("div");
   cajaDiv.className = "caja";
   cajaDiv.innerHTML = `
-    <h3>Caja ${cajaActual}</h3>
+    <h3>
+			Caja ${cajaActual}
+			<button onclick="editarCaja('${cajaId}')">✏️</button>
+		</h3>
     <div id="contenido-${cajaId}"></div>
     <div style="margin-top:10px;">
       <input type="number" min="1" placeholder="Cantidad" id="cantidad-${cajaId}" />
@@ -192,7 +195,10 @@ function editarPedido(index) {
     const cajaDiv = document.createElement("div");
     cajaDiv.className = "caja";
     cajaDiv.innerHTML = `
-      <h3>Caja ${i}</h3>
+      <h3>
+				Caja ${i}
+				<button onclick="editarCaja('${cajaId}')">✏️</button>
+			</h3>
       <div id="contenido-${cajaId}"></div>
       <div style="margin-top:10px;">
         <input type="number" min="1" placeholder="Cantidad" id="cantidad-${cajaId}" />
@@ -283,5 +289,61 @@ function descargarPedido(fecha) {
   }
 
   doc.save(`pedido-${fecha.replace(/[^\d]/g, "_")}.pdf`);
+}
+
+function editarCaja(cajaId) {
+  const productos = pedido[cajaId];
+
+  const contenidoDiv = document.getElementById(`contenido-${cajaId}`);
+  contenidoDiv.innerHTML = ""; // limpiamos
+
+  productos.forEach((producto, index) => {
+    const wrapper = document.createElement("div");
+
+    wrapper.innerHTML = `
+      <input type="number" value="${producto.cantidad}" id="edit-cantidad-${cajaId}-${index}" style="width: 60px;" />
+      x
+      <input type="text" value="${producto.asin}" id="edit-asin-${cajaId}-${index}" maxlength="4" style="width: 60px;" />
+    `;
+
+    contenidoDiv.appendChild(wrapper);
+  });
+
+  const guardarBtn = document.createElement("button");
+  guardarBtn.textContent = "💾 Guardar cambios";
+  guardarBtn.style.marginTop = "10px";
+  guardarBtn.onclick = () => guardarCambiosCaja(cajaId, productos.length);
+
+  contenidoDiv.appendChild(guardarBtn);
+}
+
+function guardarCambiosCaja(cajaId, total) {
+  const nuevosProductos = [];
+
+  for (let i = 0; i < total; i++) {
+    const cantidad = parseInt(document.getElementById(`edit-cantidad-${cajaId}-${i}`).value);
+    const asin = document.getElementById(`edit-asin-${cajaId}-${i}`).value.trim().toUpperCase();
+
+    if (!cantidad || !asin || asin.length !== 4) {
+      alert("Todos los productos deben tener una cantidad válida y un ASIN de 4 letras.");
+      return;
+    }
+
+    nuevosProductos.push({ asin, cantidad });
+  }
+
+  // Actualiza la caja
+  pedido[cajaId] = nuevosProductos;
+
+  // Vuelve a mostrar los productos de forma normal
+  const contenidoDiv = document.getElementById(`contenido-${cajaId}`);
+  contenidoDiv.innerHTML = "";
+
+  nuevosProductos.forEach(producto => {
+    const p = document.createElement("p");
+    p.textContent = `${producto.cantidad} x ${producto.asin}`;
+    contenidoDiv.appendChild(p);
+  });
+
 }
 
