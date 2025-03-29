@@ -12,6 +12,7 @@ function startPedido() {
   cajaActual = 0;
   editandoIndex = null;
   document.getElementById("pedido-area").innerHTML = `
+    <h2>📦 Crear Pedido para Amazon</h2>
     <button onclick="nuevaCaja()">Crear caja</button>
     <div id="cajas"></div>
     <button onclick="acabarPedido(true)" style="margin-top:2rem;">Acabar pedido</button>
@@ -32,7 +33,7 @@ function nuevaCaja() {
 			<button onclick="editarCaja('${cajaId}')">✏️</button>
 		</h3>
     <div id="contenido-${cajaId}"></div>
-    <div style="margin-top:10px;">
+    <div class="input-line">
       <input type="number" min="1" placeholder="Cantidad" id="cantidad-${cajaId}" />
       <span>x</span>
       <input type="text" maxlength="4" placeholder="ASIN (últimos 4)" id="asin-${cajaId}" />
@@ -140,7 +141,7 @@ function cargarPedidosGuardados() {
     mostrarPedidosGuardados();
   }
 }
-
+// mostrarPedidosGuardados
 function mostrarPedidosGuardados() {
   const container = document.getElementById("pedidos-guardados");
   if (!container) {
@@ -151,17 +152,23 @@ function mostrarPedidosGuardados() {
   }
 
   const lista = pedidosGuardados.map((p, index) => `
-    <li>
-      <button onclick="verPedido(${index})">🗂 ${p.fecha} - ${p.totalUnidades} unidades</button>
-      <button onclick="editarPedido(${index})">✏️</button>
-      <button onclick="eliminarPedido(${index})">🗑️</button>
-    </li>`).join("");
+    <div class="pedido-item">
+      <button class="pedido-btn" onclick="verPedido(${index})">
+        📁 ${p.fecha} - ${p.totalUnidades} unidades
+      </button>
+      <div class="acciones">
+        <button class="icon-btn" onclick="editarPedido(${index})">✏️</button>
+        <button class="icon-btn" onclick="eliminarPedido(${index})">🗑️</button>
+      </div>
+    </div>
+  `).join("");
 
   document.getElementById("pedidos-guardados").innerHTML = `
     <h4>📁 Pedidos guardados:</h4>
-    <ul>${lista}</ul>
+    ${lista}
   `;
 }
+
 
 function verPedido(index) {
   const p = pedidosGuardados[index];
@@ -195,12 +202,12 @@ function editarPedido(index) {
     const cajaDiv = document.createElement("div");
     cajaDiv.className = "caja";
     cajaDiv.innerHTML = `
-      <h3>
-				Caja ${i}
-				<button onclick="editarCaja('${cajaId}')">✏️</button>
-			</h3>
+      <div class = "Titulo_caja">
+        <h3>Caja ${cajaActual}</h3>
+        <button onclick="editarCaja('${cajaId}')" class="icon-btn">✏️</button>
+      </div>
       <div id="contenido-${cajaId}"></div>
-      <div style="margin-top:10px;">
+      <div class="input-line">
         <input type="number" min="1" placeholder="Cantidad" id="cantidad-${cajaId}" />
         <span>x</span>
         <input type="text" maxlength="4" placeholder="ASIN (últimos 4)" id="asin-${cajaId}" />

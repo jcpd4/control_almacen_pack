@@ -15,4 +15,5 @@ function loadTool(path) {
       <p>Selecciona una herramienta desde el menú lateral.</p>
     `;
   }
+
   
