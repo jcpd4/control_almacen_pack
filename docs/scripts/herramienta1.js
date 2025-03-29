@@ -64,59 +64,55 @@ function nuevaCaja() {
 // agregarProducto
 function agregarProducto(cajaId) {
   const cantidad = parseInt(document.getElementById(`cantidad-${cajaId}`).value);
-  const asinInput = document.getElementById(`asin-${cajaId}`).value.trim().toUpperCase();
+  const input = document.getElementById(`asin-${cajaId}`).value.trim().toUpperCase();
 
-  if (!cantidad || !asinInput || asinInput.length !== 4) {
-    alert("Por favor, introduce una cantidad válida y un ASIN de 4 caracteres.");
+  if (!cantidad || !input || input.length !== 4) {
+    alert("Por favor, introduce una cantidad válida y un código de 4 caracteres.");
     return;
   }
 
-  // Buscar el ASIN completo en asinData
-  let asinCompleto = asinInput;
+  let fnskuCompleto = input;
+  let asin = "";
   let sku = "";
-  let codigoInterno = "";
 
-  for (const [asin, data] of Object.entries(asinData)) {
-    if (data.ultimos4 === asinInput) {
-      asinCompleto = asin;
+  for (const [asinKey, data] of Object.entries(asinData)) {
+    if (data.codigoInterno.slice(-4).toUpperCase() === input) {
+      fnskuCompleto = data.codigoInterno;
+      asin = asinKey;
       sku = data.sku;
-      codigoInterno = data.codigoInterno;
       break;
     }
   }
 
-  // Si no lo encuentra, avisar (opcional)
-  if (asinCompleto === asinInput) {
-    alert("❗ No se ha encontrado un ASIN completo para esos 4 caracteres. Se usará tal cual.");
+  if (fnskuCompleto === input) {
+    alert("❗ No se ha encontrado un FNSKU completo para esos 4 caracteres. Se usará tal cual.");
   }
 
-  // Guardar en el pedido
-  pedido[cajaId].push({ asin: asinCompleto, cantidad });
+  pedido[cajaId].push({ fnsku: fnskuCompleto, cantidad });
 
-  // Mostrar en pantalla
   const contenidoDiv = document.getElementById(`contenido-${cajaId}`);
   const p = document.createElement("p");
-  p.innerHTML = `${cantidad} x <strong>${asinCompleto}</strong>` + 
-    (sku && codigoInterno ? ` <br><small>SKU: ${sku} | Interno: ${codigoInterno}</small>` : '');
+  p.innerHTML = `${cantidad} x <strong>${fnskuCompleto}</strong>` + 
+    (sku && asin ? `<br><small>SKU: ${sku} | ASIN: ${asin}</small>` : '');
   contenidoDiv.appendChild(p);
 
-  // Limpiar inputs
   document.getElementById(`cantidad-${cajaId}`).value = "";
   document.getElementById(`asin-${cajaId}`).value = "";
 }
 
 
+// acabarPedido
 function acabarPedido(modoEdicion = false) {
   const resumen = {};
   const cajaResumen = {};
 
   for (let [cajaId, productos] of Object.entries(pedido)) {
-    for (let { asin, cantidad } of productos) {
-      if (!resumen[asin]) resumen[asin] = 0;
-      resumen[asin] += cantidad;
+    for (let { fnsku, cantidad } of productos) {
+      if (!resumen[fnsku]) resumen[fnsku] = 0;
+      resumen[fnsku] += cantidad;
 
-      if (!cajaResumen[asin]) cajaResumen[asin] = {};
-      cajaResumen[asin][cajaId] = (cajaResumen[asin][cajaId] || 0) + cantidad;
+      if (!cajaResumen[fnsku]) cajaResumen[fnsku] = {};
+      cajaResumen[fnsku][cajaId] = (cajaResumen[fnsku][cajaId] || 0) + cantidad;
     }
   }
 
@@ -124,23 +120,30 @@ function acabarPedido(modoEdicion = false) {
   const totalUnidades = Object.values(resumen).reduce((acc, val) => acc + val, 0);
 
   let resultadoHTML = `<h3>🧾 Informe de Pedido - ${fecha}</h3>`;
-  resultadoHTML += "<h4>Totales por ASIN:</h4><ul>";
-  for (let asin in resumen) {
-    resultadoHTML += `<li><strong>${asin}</strong>: ${resumen[asin]} unidades</li>`;
+  resultadoHTML += "<h4>Totales por FNSKU:</h4><ul>";
+  for (let fnsku in resumen) {
+    let extra = "";
+    for (const [asin, data] of Object.entries(asinData)) {
+      if (data.codigoInterno === fnsku) {
+        extra = ` <small>(SKU: ${data.sku}, ASIN: ${asin})</small>`;
+        break;
+      }
+    }
+    resultadoHTML += `<li><strong>${fnsku}</strong>: ${resumen[fnsku]} unidades${extra}</li>`;
   }
   resultadoHTML += "</ul>";
 
-  resultadoHTML += "<h4>Distribución por cajas:</h4><table border='1' cellspacing='0' cellpadding='5'><tr><th>ASIN</th>";
+  resultadoHTML += "<h4>Distribución por cajas:</h4><table border='1' cellspacing='0' cellpadding='5'><tr><th>FNSKU</th>";
   for (let i = 1; i <= cajaActual; i++) {
     resultadoHTML += `<th>Caja ${i}</th>`;
   }
   resultadoHTML += "</tr>";
 
-  for (let asin in cajaResumen) {
-    resultadoHTML += `<tr><td>${asin}</td>`;
+  for (let fnsku in cajaResumen) {
+    resultadoHTML += `<tr><td>${fnsku}</td>`;
     for (let i = 1; i <= cajaActual; i++) {
       const key = "caja" + i;
-      resultadoHTML += `<td>${cajaResumen[asin][key] || 0}</td>`;
+      resultadoHTML += `<td>${cajaResumen[fnsku][key] || 0}</td>`;
     }
     resultadoHTML += "</tr>";
   }
@@ -241,9 +244,9 @@ function verPedido(index) {
     document.getElementById("cajas").appendChild(cajaDiv);
 
     const contenidoDiv = document.getElementById(`contenido-${cajaId}`);
-    productos.forEach(({ asin, cantidad }) => {
+    productos.forEach(({ fnsku, cantidad }) => {
       const p = document.createElement("p");
-      p.textContent = `${cantidad} x ${asin}`;
+      p.textContent = `${cantidad} x ${fnsku}`;
       contenidoDiv.appendChild(p);
     });
   });
@@ -255,7 +258,6 @@ function editarPedido(index) {
   pedido = p.pedido;
   editandoIndex = index;
 
-  // Reiniciar el valor real
   cajaActual = 0;
 
   document.getElementById("pedido-area").innerHTML = `
@@ -280,25 +282,26 @@ function editarPedido(index) {
       <div class="input-line">
         <input type="number" min="1" placeholder="Cantidad" id="cantidad-${nuevaCajaId}" />
         <span>x</span>
-        <input type="text" maxlength="4" placeholder="ASIN (últimos 4)" id="asin-${nuevaCajaId}" />
+        <input type="text" maxlength="4" placeholder="FNSKU (últimos 4)" id="asin-${nuevaCajaId}" />
         <button onclick="agregarProducto('${nuevaCajaId}')">Agregar</button>
       </div>
       <hr/>
     `;
+
     document.getElementById("cajas").appendChild(cajaDiv);
 
     const contenidoDiv = document.getElementById(`contenido-${nuevaCajaId}`);
-    productos.forEach(({ asin, cantidad }) => {
+    productos.forEach(({ fnsku, cantidad }) => {
       const p = document.createElement("p");
-      p.textContent = `${cantidad} x ${asin}`;
+      p.textContent = `${cantidad} x ${fnsku}`;
       contenidoDiv.appendChild(p);
     });
 
-    // Renombrar la caja internamente para mantener coherencia
     delete pedido[cajaId];
     pedido[nuevaCajaId] = productos;
   });
 }
+
 
 
 function eliminarPedido(index) {
@@ -308,12 +311,12 @@ function eliminarPedido(index) {
   mostrarPedidosGuardados();
   document.getElementById("pedido-area").innerHTML = "";
 }
-
+// descargarPedido
 function descargarPedido(fecha) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-
   let y = 10;
+
   doc.setFontSize(16);
   doc.text("Informe de Pedido - Galileo Tools", 10, y);
   y += 10;
@@ -321,25 +324,31 @@ function descargarPedido(fecha) {
   doc.text(`Fecha: ${fecha}`, 10, y);
   y += 10;
 
-  // Resumen
-  doc.text("Totales por ASIN:", 10, y);
+  doc.text("Totales por FNSKU:", 10, y);
   y += 7;
 
   const resumen = {};
   const cajaResumen = {};
 
   for (let [cajaId, productos] of Object.entries(pedido)) {
-    for (let { asin, cantidad } of productos) {
-      if (!resumen[asin]) resumen[asin] = 0;
-      resumen[asin] += cantidad;
+    for (let { fnsku, cantidad } of productos) {
+      if (!resumen[fnsku]) resumen[fnsku] = 0;
+      resumen[fnsku] += cantidad;
 
-      if (!cajaResumen[asin]) cajaResumen[asin] = {};
-      cajaResumen[asin][cajaId] = (cajaResumen[asin][cajaId] || 0) + cantidad;
+      if (!cajaResumen[fnsku]) cajaResumen[fnsku] = {};
+      cajaResumen[fnsku][cajaId] = (cajaResumen[fnsku][cajaId] || 0) + cantidad;
     }
   }
 
-  for (let asin in resumen) {
-    doc.text(`- ${asin}: ${resumen[asin]} unidades`, 15, y);
+  for (let fnsku in resumen) {
+    let extra = "";
+    for (const [asin, data] of Object.entries(asinData)) {
+      if (data.codigoInterno === fnsku) {
+        extra = ` (SKU: ${data.sku}, ASIN: ${asin})`;
+        break;
+      }
+    }
+    doc.text(`- ${fnsku}: ${resumen[fnsku]} unidades${extra}`, 15, y);
     y += 6;
   }
 
@@ -347,20 +356,19 @@ function descargarPedido(fecha) {
   doc.text("Distribución por cajas:", 10, y);
   y += 7;
 
-  // Encabezado
   const cajas = Object.keys(pedido);
-  let header = "ASIN";
+  let header = "FNSKU";
   for (let i = 1; i <= cajas.length; i++) {
     header += ` | Caja ${i}`;
   }
   doc.text(header, 10, y);
   y += 6;
 
-  for (let asin in cajaResumen) {
-    let row = asin;
+  for (let fnsku in cajaResumen) {
+    let row = fnsku;
     for (let i = 1; i <= cajas.length; i++) {
       const key = "caja" + i;
-      row += ` | ${cajaResumen[asin][key] || 0}`;
+      row += ` | ${cajaResumen[fnsku][key] || 0}`;
     }
     doc.text(row, 10, y);
     y += 6;
@@ -372,6 +380,7 @@ function descargarPedido(fecha) {
 
   doc.save(`pedido-${fecha.replace(/[^\d]/g, "_")}.pdf`);
 }
+
 
 function editarCaja(cajaId) {
   const productos = pedido[cajaId];
@@ -385,7 +394,7 @@ function editarCaja(cajaId) {
     wrapper.innerHTML = `
       <input type="number" value="${producto.cantidad}" id="edit-cantidad-${cajaId}-${index}" style="width: 60px;" />
       x
-      <input type="text" value="${producto.asin}" id="edit-asin-${cajaId}-${index}" maxlength="4" style="width: 60px;" />
+      <input type="text" value="${producto.fnsku}" id="edit-asin-${cajaId}-${index}" maxlength="4" style="width: 60px;" />
     `;
 
     contenidoDiv.appendChild(wrapper);
@@ -404,20 +413,20 @@ function guardarCambiosCaja(cajaId, total) {
 
   for (let i = 0; i < total; i++) {
     const cantidad = parseInt(document.getElementById(`edit-cantidad-${cajaId}-${i}`).value);
-    const asin = document.getElementById(`edit-asin-${cajaId}-${i}`).value.trim().toUpperCase();
+    const fnsku = document.getElementById(`edit-asin-${cajaId}-${i}`).value.trim().toUpperCase();
 
-    // Si la cantidad es 0, ignoramos este producto (lo eliminamos)
+    // Si la cantidad es 0 o no válida, lo eliminamos (no se agrega)
     if (!cantidad || cantidad === 0) {
       continue;
     }
 
-    // Validar que el ASIN tenga al menos 4 caracteres
-    if (asin.length < 4) {
-      alert("El ASIN debe tener al menos 4 caracteres.");
+    // Validar que el FNSKU tenga al menos 4 caracteres
+    if (fnsku.length < 4) {
+      alert("El código FNSKU debe tener al menos 4 caracteres.");
       return;
     }
 
-    nuevosProductos.push({ asin, cantidad });
+    nuevosProductos.push({ fnsku, cantidad });
   }
 
   // Actualiza la caja con productos válidos
@@ -428,12 +437,26 @@ function guardarCambiosCaja(cajaId, total) {
   contenidoDiv.innerHTML = "";
 
   nuevosProductos.forEach(producto => {
+    // Buscar información del producto para mostrar el SKU y nombre
+    let sku = "";
+    let asin = "";
+    for (const [key, data] of Object.entries(asinData)) {
+      if (data.codigoInterno === producto.fnsku) {
+        sku = data.sku;
+        asin = key;
+        break;
+      }
+    }
+
     const p = document.createElement("p");
-    p.textContent = `${producto.cantidad} x ${producto.asin}`;
+    p.innerHTML = `${producto.cantidad} x <strong>${producto.fnsku}</strong>` + 
+      (sku ? ` <br><small>SKU: ${sku} | ASIN: ${asin}</small>` : '');
     contenidoDiv.appendChild(p);
   });
 
   alert("✅ Cambios guardados correctamente.");
 }
+
+
 
 
