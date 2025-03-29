@@ -3,6 +3,10 @@ let cajaActual = 0;
 let pedidosGuardados = [];
 let editandoIndex = null;
 
+//para escanear
+let escaner;
+
+
 // cargamos la variable del json puro
 //⚠️ Importante
 // Este método solo funciona si estás sirviendo la web desde un servidor local (como con Live Server de VS Code o Netlify). 
@@ -36,7 +40,7 @@ function startPedido() {
     <div id="informe"></div>
   `;
 }
-
+// nueva caja
 function nuevaCaja() {
   cajaActual++;
   const cajaId = "caja" + cajaActual;
@@ -45,49 +49,51 @@ function nuevaCaja() {
   const cajaDiv = document.createElement("div");
   cajaDiv.className = "caja";
   cajaDiv.innerHTML = `
-  <div class="Titulo_caja">
-    <h3>Caja ${cajaActual}</h3>
-    <button onclick="editarCaja('${cajaId}')" class="icon-btn">✏️</button>
-  </div>
-  <div id="contenido-${cajaId}"></div>
-  <div class="input-line">
-    <input type="number" min="1" placeholder="Cantidad" id="cantidad-${cajaId}" />
-    <span>x</span>
-    <input type="text" maxlength="4" placeholder="ASIN (últimos 4)" id="asin-${cajaId}" />
-    <button onclick="agregarProducto('${cajaId}')">Agregar</button>
-  </div>
-  <hr/>
-`;
+    <div class="Titulo_caja">
+      <h3>Caja ${cajaActual}</h3>
+      <button onclick="editarCaja('${cajaId}')" class="icon-btn">✏️</button>
+    </div>
+    <div id="contenido-${cajaId}"></div>
+    <div class="input-line">
+      <input type="number" min="1" placeholder="Cantidad" id="cantidad-${cajaId}" />
+      <span>x</span>
+      <input type="text" maxlength="20" placeholder="FNSKU (últimos 4)" id="asin-${cajaId}" />
+      <button onclick="escanearFnsku('${cajaId}')">📷 Escanear</button>
+      <button onclick="agregarProducto('${cajaId}')">Agregar</button>
+    </div>
+    <hr/>
+  `;
 
   document.getElementById("cajas").appendChild(cajaDiv);
 }
+
+
+
 // agregarProducto
 function agregarProducto(cajaId) {
   const cantidad = parseInt(document.getElementById(`cantidad-${cajaId}`).value);
-  const input = document.getElementById(`asin-${cajaId}`).value.trim().toUpperCase();
+  let input = document.getElementById(`asin-${cajaId}`).value.trim().toUpperCase();
 
-  if (!cantidad || !input || input.length !== 4) {
-    alert("Por favor, introduce una cantidad válida y un código de 4 caracteres.");
+  if (!cantidad || !input) {
+    alert("Por favor, introduce una cantidad válida");
     return;
   }
+
+  // Si el input tiene más de 4 caracteres, nos quedamos con los últimos 4
+  const ultimos4 = input.length > 4 ? input.slice(-4) : input;
 
   let fnskuCompleto = input;
   let asin = "";
   let sku = "";
 
   for (const [asinKey, data] of Object.entries(asinData)) {
-    if (data.codigoInterno.slice(-4).toUpperCase() === input) {
+    if (data.codigoInterno.slice(-4).toUpperCase() === ultimos4) {
       fnskuCompleto = data.codigoInterno;
       asin = asinKey;
       sku = data.sku;
       break;
     }
   }
-
-  if (fnskuCompleto === input) {
-    alert("❗ No se ha encontrado un FNSKU completo para esos 4 caracteres. Se usará tal cual.");
-  }
-
   pedido[cajaId].push({ fnsku: fnskuCompleto, cantidad });
 
   const contenidoDiv = document.getElementById(`contenido-${cajaId}`);
@@ -99,6 +105,7 @@ function agregarProducto(cajaId) {
   document.getElementById(`cantidad-${cajaId}`).value = "";
   document.getElementById(`asin-${cajaId}`).value = "";
 }
+
 
 
 // acabarPedido
@@ -169,10 +176,8 @@ function guardarPedido(fecha, totalUnidades) {
   if (editandoIndex !== null) {
     pedidosGuardados[editandoIndex] = nuevoPedido;
     editandoIndex = null;
-    alert("✏️ Pedido actualizado correctamente.");
   } else {
     pedidosGuardados.push(nuevoPedido);
-    alert("📦 Pedido guardado correctamente.");
   }
 
   localStorage.setItem("pedidos", JSON.stringify(pedidosGuardados));
@@ -282,7 +287,7 @@ function editarPedido(index) {
       <div class="input-line">
         <input type="number" min="1" placeholder="Cantidad" id="cantidad-${nuevaCajaId}" />
         <span>x</span>
-        <input type="text" maxlength="4" placeholder="FNSKU (últimos 4)" id="asin-${nuevaCajaId}" />
+        <input type="text" placeholder="FNSKU (últimos 4)" id="asin-${nuevaCajaId}" />
         <button onclick="agregarProducto('${nuevaCajaId}')">Agregar</button>
       </div>
       <hr/>
@@ -394,7 +399,7 @@ function editarCaja(cajaId) {
     wrapper.innerHTML = `
       <input type="number" value="${producto.cantidad}" id="edit-cantidad-${cajaId}-${index}" style="width: 60px;" />
       x
-      <input type="text" value="${producto.fnsku}" id="edit-asin-${cajaId}-${index}" maxlength="4" style="width: 60px;" />
+      <input type="text" value="${producto.fnsku}" id="edit-asin-${cajaId}-${index}"  style="width: 60px;" />
     `;
 
     contenidoDiv.appendChild(wrapper);
@@ -418,12 +423,6 @@ function guardarCambiosCaja(cajaId, total) {
     // Si la cantidad es 0 o no válida, lo eliminamos (no se agrega)
     if (!cantidad || cantidad === 0) {
       continue;
-    }
-
-    // Validar que el FNSKU tenga al menos 4 caracteres
-    if (fnsku.length < 4) {
-      alert("El código FNSKU debe tener al menos 4 caracteres.");
-      return;
     }
 
     nuevosProductos.push({ fnsku, cantidad });
@@ -457,6 +456,40 @@ function guardarCambiosCaja(cajaId, total) {
   alert("✅ Cambios guardados correctamente.");
 }
 
+// Escanear fnsku
+function escanearFnsku(cajaId) {
+  document.getElementById("modal-escaner").style.display = "flex";
+
+  escaner = new Html5Qrcode("lector");
+  escaner.start(
+    { facingMode: "environment" }, // cámara trasera
+    {
+      fps: 10,
+      qrbox: { width: 250, height: 250 }
+    },
+    qrCodeMessage => {
+      document.getElementById(`asin-${cajaId}`).value = qrCodeMessage.trim().toUpperCase();
+      escaner.stop().then(() => {
+        document.getElementById("modal-escaner").style.display = "none";
+        escaner.clear();
+      });
+    },
+    errorMessage => {
+      // Puedes mostrar errores si quieres
+    }
+  ).catch(err => {
+    alert("No se pudo acceder a la cámara: " + err);
+  });
+}
+
+function cerrarEscaner() {
+  if (escaner) {
+    escaner.stop().then(() => {
+      escaner.clear();
+      document.getElementById("modal-escaner").style.display = "none";
+    });
+  }
+}
 
 
 
