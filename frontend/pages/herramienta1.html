@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Galileo Tools - Herramienta 1</title>
+  <link rel="stylesheet" href="../styles/styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Menú lateral -->
+    <nav class="sidebar">
+      <a href="../index.html" class="menu-btn">🏠</a>
+      <a href="herramienta1.html" class="menu-btn">📦</a>
+      <a href="#" class="menu-btn">📊</a>
+    </nav>
+
+    <!-- Área derecha -->
+    <div class="main-area">
+      <header class="topbar">
+        <h1 onclick="window.location.href='../index.html'">Galileo Tools</h1>
+      </header>
+
+      <main id="main-content">
+        <h2>📦 Crear Pedido para Amazon</h2>
+        <button onclick="startPedido()">Crear nuevo pedido</button>
+        <div id="pedido-area" style="margin-top: 2rem;"></div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../scripts/herramienta1.js"></script>
+</body>
+</html>

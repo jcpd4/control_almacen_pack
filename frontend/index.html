@@ -3,21 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Packlist Tools</title>
-  <link rel="stylesheet" href="css/styles.css" />
+  <title>Galileo Tools - Inicio</title>
+  <link rel="stylesheet" href="styles/styles.css" />
 </head>
 <body>
   <div class="container">
+    <!-- Menú lateral -->
     <nav class="sidebar">
-      <button class="menu-btn" onclick="loadTool('tools/herramienta1.html')">📅</button>
-      <button class="menu-btn" onclick="loadTool('tools/herramienta2.html')">📝</button>
-      <!-- Más botones -->
+      <a href="index.html" class="menu-btn">🏠</a>
+      <a href="pages/herramienta1.html" class="menu-btn">📦</a>
+      <a href="#" class="menu-btn">📊</a> <!-- Futuras herramientas -->
     </nav>
-    <main id="main-content">
-      <h1>Bienvenido a Packlist Tools</h1>
-    </main>
-  </div>
 
-  <script src="js/main.js"></script>
+    <!-- Área derecha -->
+    <div class="main-area">
+      <header class="topbar">
+        <h1 onclick="window.location.href='index.html'">Galileo Tools</h1>
+      </header>
+
+      <main id="main-content">
+        <h2>Bienvenido a Galileo Tools</h2>
+        <p>Selecciona una herramienta desde el menú lateral.</p>
+      </main>
+    </div>
+  </div>
 </body>
 </html>
