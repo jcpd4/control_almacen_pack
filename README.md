@@ -22,7 +22,8 @@ Herramienta web interactiva para crear, editar y gestionar pedidos de Amazon con
 
 ## 🖥️ Demo
 
-🚧 *Próximamente disponible en Netlify / GitHub Pages / Vercel*
+🚧 Netlify --> https://rainbow-treacle-08fec2.netlify.app/
+
 
 ---
 
@@ -32,10 +33,15 @@ Herramienta web interactiva para crear, editar y gestionar pedidos de Amazon con
 📁 /data
    └── asins.json           → Base de datos de productos (FNSKU, SKU, ASIN)
 
-📁 /js
-   └── app.js               → Lógica principal del sistema
+📁 /scripts 
+   └── herramienta1.js          → logica de la herramienta
+   └── main.js                  → main
 
-📁 /css
+
+📁 /pages
+   └── herramienta1.html          → Esqueleto de la página de crear pedido para amazon
+
+📁 /styles
    └── styles.css           → Estilos personalizados
 
 📄 index.html               → Página principal de la app
@@ -77,7 +83,7 @@ Herramienta web interactiva para crear, editar y gestionar pedidos de Amazon con
     "ultimos4": "H2KJ",
     "sku": "PACKLIST Planning Menu FR",
     "codigoInterno": "X001OPH2KJ",
-    "peso": 0
+    "peso": 0 // aquí tendremos que poner los pesos
   }
 }
 ```
