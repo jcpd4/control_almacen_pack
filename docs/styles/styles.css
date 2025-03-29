@@ -250,6 +250,12 @@ table td {
 }
 
 /* Botón de editar al lado del título de la caja */
+.caja {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
 .caja h3 {
   display: flex;
   justify-content: space-between;

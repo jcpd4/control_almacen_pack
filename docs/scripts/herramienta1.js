@@ -169,52 +169,33 @@ function mostrarPedidosGuardados() {
   `;
 }
 
-
+// ver pedido
 function verPedido(index) {
   const p = pedidosGuardados[index];
   pedido = p.pedido;
-  cajaActual = Object.keys(pedido).length;
+  const cajas = Object.keys(pedido);
+  cajaActual = cajas.length;
 
   document.getElementById("pedido-area").innerHTML = `
     <h3>📂 Pedido guardado del ${p.fecha}</h3>
     <button onclick="acabarPedido(false)">🔁 Ver informe</button>
+    <div id="cajas"></div>
     <div id="informe" style="margin-top: 2rem;"></div>
   `;
-}
 
-function editarPedido(index) {
-  const p = pedidosGuardados[index];
-  pedido = p.pedido;
-  cajaActual = Object.keys(pedido).length;
-  editandoIndex = index;
-
-  document.getElementById("pedido-area").innerHTML = `
-    <button onclick="nuevaCaja()">Crear caja</button>
-    <div id="cajas"></div>
-    <button onclick="acabarPedido(true)" style="margin-top:2rem;">Actualizar pedido</button>
-    <div id="informe"></div>
-  `;
-
-  for (let i = 1; i <= cajaActual; i++) {
-    const cajaId = "caja" + i;
-    const productos = pedido[cajaId] || [];
+  cajas.forEach((cajaId, i) => {
+    const productos = pedido[cajaId];
 
     const cajaDiv = document.createElement("div");
     cajaDiv.className = "caja";
     cajaDiv.innerHTML = `
-      <div class = "Titulo_caja">
-        <h3>Caja ${cajaActual}</h3>
+      <div class="Titulo_caja">
+        <h3>Caja ${i + 1}</h3>
         <button onclick="editarCaja('${cajaId}')" class="icon-btn">✏️</button>
       </div>
       <div id="contenido-${cajaId}"></div>
-      <div class="input-line">
-        <input type="number" min="1" placeholder="Cantidad" id="cantidad-${cajaId}" />
-        <span>x</span>
-        <input type="text" maxlength="4" placeholder="ASIN (últimos 4)" id="asin-${cajaId}" />
-        <button onclick="agregarProducto('${cajaId}')">Agregar</button>
-      </div>
-      <hr/>
     `;
+
     document.getElementById("cajas").appendChild(cajaDiv);
 
     const contenidoDiv = document.getElementById(`contenido-${cajaId}`);
@@ -223,8 +204,60 @@ function editarPedido(index) {
       p.textContent = `${cantidad} x ${asin}`;
       contenidoDiv.appendChild(p);
     });
-  }
+  });
 }
+
+// editar pedido
+function editarPedido(index) {
+  const p = pedidosGuardados[index];
+  pedido = p.pedido;
+  editandoIndex = index;
+
+  // Reiniciar el valor real
+  cajaActual = 0;
+
+  document.getElementById("pedido-area").innerHTML = `
+    <button onclick="nuevaCaja()">Crear caja</button>
+    <div id="cajas"></div>
+    <button onclick="acabarPedido(true)" style="margin-top:2rem;">Actualizar pedido</button>
+    <div id="informe"></div>
+  `;
+
+  Object.entries(pedido).forEach(([cajaId, productos], index) => {
+    cajaActual++;
+    const nuevaCajaId = "caja" + cajaActual;
+
+    const cajaDiv = document.createElement("div");
+    cajaDiv.className = "caja";
+    cajaDiv.innerHTML = `
+      <div class="Titulo_caja">
+        <h3>Caja ${cajaActual}</h3>
+        <button onclick="editarCaja('${nuevaCajaId}')" class="icon-btn">✏️</button>
+      </div>
+      <div id="contenido-${nuevaCajaId}"></div>
+      <div class="input-line">
+        <input type="number" min="1" placeholder="Cantidad" id="cantidad-${nuevaCajaId}" />
+        <span>x</span>
+        <input type="text" maxlength="4" placeholder="ASIN (últimos 4)" id="asin-${nuevaCajaId}" />
+        <button onclick="agregarProducto('${nuevaCajaId}')">Agregar</button>
+      </div>
+      <hr/>
+    `;
+    document.getElementById("cajas").appendChild(cajaDiv);
+
+    const contenidoDiv = document.getElementById(`contenido-${nuevaCajaId}`);
+    productos.forEach(({ asin, cantidad }) => {
+      const p = document.createElement("p");
+      p.textContent = `${cantidad} x ${asin}`;
+      contenidoDiv.appendChild(p);
+    });
+
+    // Renombrar la caja internamente para mantener coherencia
+    delete pedido[cajaId];
+    pedido[nuevaCajaId] = productos;
+  });
+}
+
 
 function eliminarPedido(index) {
   if (!confirm("¿Seguro que quieres eliminar este pedido?")) return;
